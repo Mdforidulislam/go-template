@@ -1,0 +1,12 @@
+version: "2"
+sql:
+  - schema: "db/migrations"  # SQLc আপনার টেবিল স্ট্রাকচার এখান থেকে পড়বে
+    queries: "db/queries"     # আপনার লেখা SQL কোয়েরি ফোল্ডার
+    engine: "postgresql"
+    gen:
+      go:
+        package: "db"         # জেনারেট হওয়া গো কোডের প্যাকেজ নাম
+        out: "db/sqlc"        # গো কোড কোন ফোল্ডারে সেভ হবে
+        sql_package: "pgx/v5" # মডার্ন pgx ড্রাইভার ব্যবহার করার জন্য (রিকমেন্ডেড)
+
+        
