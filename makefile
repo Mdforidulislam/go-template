@@ -1,4 +1,4 @@
-DB_URL=postgres://postgres:password@localhost:5432/my_test_db?sslmode=disable
+DB_URL=postgres://postgres@localhost:5432/my_test_db?sslmode=disable
 
 # ==============================================================================
 # 🧼 1. MIGRATION COMPILER (সুন্দর ব্লক কমেন্টসহ ফাইল জোড়া লাগানোর প্রো-স্ক্রিপ্ট)
