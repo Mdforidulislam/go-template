@@ -7,86 +7,151 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (name, email)
-VALUES ($1, $2)
-RETURNING id, name, email, created_at, updated_at
+INSERT INTO users (
+    full_name, email, password_hash, phone_number, role
+) VALUES (
+    $1, $2, $3, $4, $5
+) RETURNING id, full_name, email, role, is_active, created_at
 `
 
 type CreateUserParams struct {
-	Name  string
-	Email string
+	FullName     string
+	Email        string
+	PasswordHash string
+	PhoneNumber  pgtype.Text
+	Role         RoleEnum
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Name, arg.Email)
-	var i User
+type CreateUserRow struct {
+	ID        pgtype.UUID
+	FullName  string
+	Email     string
+	Role      RoleEnum
+	IsActive  bool
+	CreatedAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.FullName,
+		arg.Email,
+		arg.PasswordHash,
+		arg.PhoneNumber,
+		arg.Role,
+	)
+	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FullName,
 		&i.Email,
+		&i.Role,
+		&i.IsActive,
 		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users
-WHERE id = $1
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, full_name, email, password_hash, role, is_active 
+FROM users 
+WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
-	_, err := q.db.Exec(ctx, deleteUser, id)
-	return err
+type GetUserByEmailRow struct {
+	ID           pgtype.UUID
+	FullName     string
+	Email        string
+	PasswordHash string
+	Role         RoleEnum
+	IsActive     bool
 }
 
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, name, email, created_at, updated_at FROM users
-WHERE id = $1 LIMIT 1
-`
-
-func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByID, id)
-	var i User
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i GetUserByEmailRow
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.FullName,
 		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.PasswordHash,
+		&i.Role,
+		&i.IsActive,
 	)
 	return i, err
 }
 
-const listUsers = `-- name: ListUsers :many
-SELECT id, name, email, created_at, updated_at FROM users
-ORDER BY id
+const getUserForUpdate = `-- name: GetUserForUpdate :one
+SELECT id, full_name, email, password_hash, role, is_active 
+FROM users 
+WHERE id = $1 AND deleted_at IS NULL LIMIT 1
+`
+
+type GetUserForUpdateRow struct {
+	ID           pgtype.UUID
+	FullName     string
+	Email        string
+	PasswordHash string
+	Role         RoleEnum
+	IsActive     bool
+}
+
+func (q *Queries) GetUserForUpdate(ctx context.Context, id pgtype.UUID) (GetUserForUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getUserForUpdate, id)
+	var i GetUserForUpdateRow
+	err := row.Scan(
+		&i.ID,
+		&i.FullName,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+		&i.IsActive,
+	)
+	return i, err
+}
+
+const listCustomers = `-- name: ListCustomers :many
+SELECT id, full_name, email, phone_number, is_active, created_at 
+FROM users 
+WHERE role = 'customer' AND deleted_at IS NULL
+ORDER BY created_at DESC
 LIMIT $1 OFFSET $2
 `
 
-type ListUsersParams struct {
+type ListCustomersParams struct {
 	Limit  int32
 	Offset int32
 }
 
-func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+type ListCustomersRow struct {
+	ID          pgtype.UUID
+	FullName    string
+	Email       string
+	PhoneNumber pgtype.Text
+	IsActive    bool
+	CreatedAt   pgtype.Timestamptz
+}
+
+func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([]ListCustomersRow, error) {
+	rows, err := q.db.Query(ctx, listCustomers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []ListCustomersRow
 	for rows.Next() {
-		var i User
+		var i ListCustomersRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.FullName,
 			&i.Email,
+			&i.PhoneNumber,
+			&i.IsActive,
 			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -98,30 +163,34 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 	return items, nil
 }
 
-const updateUser = `-- name: UpdateUser :one
-UPDATE users
-SET name = $2,
-    email = $3,
-    updated_at = CURRENT_TIMESTAMP
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users 
+SET password_hash = $2, updated_at = CURRENT_TIMESTAMP 
 WHERE id = $1
-RETURNING id, name, email, created_at, updated_at
 `
 
-type UpdateUserParams struct {
-	ID    int64
-	Name  string
-	Email string
+type UpdateUserPasswordParams struct {
+	ID           pgtype.UUID
+	PasswordHash string
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, updateUser, arg.ID, arg.Name, arg.Email)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
+	return err
+}
+
+const updateUserStatus = `-- name: UpdateUserStatus :exec
+UPDATE users 
+SET is_active = $2, updated_at = CURRENT_TIMESTAMP 
+WHERE id = $1
+`
+
+type UpdateUserStatusParams struct {
+	ID       pgtype.UUID
+	IsActive bool
+}
+
+func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) error {
+	_, err := q.db.Exec(ctx, updateUserStatus, arg.ID, arg.IsActive)
+	return err
 }

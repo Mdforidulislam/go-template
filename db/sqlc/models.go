@@ -5,52 +5,544 @@
 package db
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type DiscountTypeEnum string
+
+const (
+	DiscountTypeEnumPercentage DiscountTypeEnum = "percentage"
+	DiscountTypeEnumFixed      DiscountTypeEnum = "fixed"
+)
+
+func (e *DiscountTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = DiscountTypeEnum(s)
+	case string:
+		*e = DiscountTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for DiscountTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullDiscountTypeEnum struct {
+	DiscountTypeEnum DiscountTypeEnum
+	Valid            bool // Valid is true if DiscountTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullDiscountTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.DiscountTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.DiscountTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullDiscountTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.DiscountTypeEnum), nil
+}
+
+type GenderEnum string
+
+const (
+	GenderEnumMale   GenderEnum = "male"
+	GenderEnumFemale GenderEnum = "female"
+	GenderEnumOther  GenderEnum = "other"
+)
+
+func (e *GenderEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = GenderEnum(s)
+	case string:
+		*e = GenderEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for GenderEnum: %T", src)
+	}
+	return nil
+}
+
+type NullGenderEnum struct {
+	GenderEnum GenderEnum
+	Valid      bool // Valid is true if GenderEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullGenderEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.GenderEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.GenderEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullGenderEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.GenderEnum), nil
+}
+
+type PaymentMethodEnum string
+
+const (
+	PaymentMethodEnumCod   PaymentMethodEnum = "cod"
+	PaymentMethodEnumBkash PaymentMethodEnum = "bkash"
+	PaymentMethodEnumNagad PaymentMethodEnum = "nagad"
+	PaymentMethodEnumCard  PaymentMethodEnum = "card"
+)
+
+func (e *PaymentMethodEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentMethodEnum(s)
+	case string:
+		*e = PaymentMethodEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentMethodEnum: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentMethodEnum struct {
+	PaymentMethodEnum PaymentMethodEnum
+	Valid             bool // Valid is true if PaymentMethodEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentMethodEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentMethodEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentMethodEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentMethodEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentMethodEnum), nil
+}
+
+type PaymentStatusEnum string
+
+const (
+	PaymentStatusEnumPending  PaymentStatusEnum = "pending"
+	PaymentStatusEnumPaid     PaymentStatusEnum = "paid"
+	PaymentStatusEnumFailed   PaymentStatusEnum = "failed"
+	PaymentStatusEnumRefunded PaymentStatusEnum = "refunded"
+	PaymentStatusEnumVoided   PaymentStatusEnum = "voided"
+)
+
+func (e *PaymentStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentStatusEnum(s)
+	case string:
+		*e = PaymentStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentStatusEnum struct {
+	PaymentStatusEnum PaymentStatusEnum
+	Valid             bool // Valid is true if PaymentStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentStatusEnum), nil
+}
+
+type ProductLabelEnum string
+
+const (
+	ProductLabelEnumNone       ProductLabelEnum = "none"
+	ProductLabelEnumNew        ProductLabelEnum = "new"
+	ProductLabelEnumFeatured   ProductLabelEnum = "featured"
+	ProductLabelEnumBestSeller ProductLabelEnum = "best_seller"
+)
+
+func (e *ProductLabelEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductLabelEnum(s)
+	case string:
+		*e = ProductLabelEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductLabelEnum: %T", src)
+	}
+	return nil
+}
+
+type NullProductLabelEnum struct {
+	ProductLabelEnum ProductLabelEnum
+	Valid            bool // Valid is true if ProductLabelEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductLabelEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductLabelEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductLabelEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductLabelEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductLabelEnum), nil
+}
+
+type ReviewStatusEnum string
+
+const (
+	ReviewStatusEnumPending  ReviewStatusEnum = "pending"
+	ReviewStatusEnumApproved ReviewStatusEnum = "approved"
+	ReviewStatusEnumRejected ReviewStatusEnum = "rejected"
+)
+
+func (e *ReviewStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ReviewStatusEnum(s)
+	case string:
+		*e = ReviewStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ReviewStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullReviewStatusEnum struct {
+	ReviewStatusEnum ReviewStatusEnum
+	Valid            bool // Valid is true if ReviewStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullReviewStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ReviewStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ReviewStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullReviewStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ReviewStatusEnum), nil
+}
+
+type RoleEnum string
+
+const (
+	RoleEnumAdmin    RoleEnum = "admin"
+	RoleEnumCustomer RoleEnum = "customer"
+)
+
+func (e *RoleEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = RoleEnum(s)
+	case string:
+		*e = RoleEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for RoleEnum: %T", src)
+	}
+	return nil
+}
+
+type NullRoleEnum struct {
+	RoleEnum RoleEnum
+	Valid    bool // Valid is true if RoleEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRoleEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.RoleEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.RoleEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRoleEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.RoleEnum), nil
+}
+
+type ShippingStatusEnum string
+
+const (
+	ShippingStatusEnumPending    ShippingStatusEnum = "pending"
+	ShippingStatusEnumProcessing ShippingStatusEnum = "processing"
+	ShippingStatusEnumShipped    ShippingStatusEnum = "shipped"
+	ShippingStatusEnumDelivered  ShippingStatusEnum = "delivered"
+	ShippingStatusEnumCancelled  ShippingStatusEnum = "cancelled"
+)
+
+func (e *ShippingStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ShippingStatusEnum(s)
+	case string:
+		*e = ShippingStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ShippingStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullShippingStatusEnum struct {
+	ShippingStatusEnum ShippingStatusEnum
+	Valid              bool // Valid is true if ShippingStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullShippingStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.ShippingStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ShippingStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullShippingStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ShippingStatusEnum), nil
+}
+
+type StockStatusEnum string
+
+const (
+	StockStatusEnumInStock    StockStatusEnum = "in_stock"
+	StockStatusEnumLowStock   StockStatusEnum = "low_stock"
+	StockStatusEnumOutOfStock StockStatusEnum = "out_of_stock"
+)
+
+func (e *StockStatusEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = StockStatusEnum(s)
+	case string:
+		*e = StockStatusEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for StockStatusEnum: %T", src)
+	}
+	return nil
+}
+
+type NullStockStatusEnum struct {
+	StockStatusEnum StockStatusEnum
+	Valid           bool // Valid is true if StockStatusEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStockStatusEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.StockStatusEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.StockStatusEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStockStatusEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.StockStatusEnum), nil
+}
+
+type Category struct {
+	ID          pgtype.UUID
+	Name        string
+	Slug        string
+	Description pgtype.Text
+	ImageUrl    string
+	IsActive    bool
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DeletedAt   pgtype.Timestamptz
+}
+
+type Coupon struct {
+	ID                pgtype.UUID
+	CouponCode        string
+	Description       pgtype.Text
+	DiscountType      DiscountTypeEnum
+	Value             pgtype.Numeric
+	MinOrderAmount    pgtype.Numeric
+	MaxDiscountAmount pgtype.Numeric
+	UsageLimit        pgtype.Int4
+	UsageLimitPerUser pgtype.Int4
+	UsedCount         int32
+	StartDate         pgtype.Timestamptz
+	ExpiryDate        pgtype.Timestamptz
+	IsActive          bool
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	DeletedAt         pgtype.Timestamptz
+}
+
 type Order struct {
-	ID        int64
-	UserID    int64
-	ProductID int64
-	Status    string
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID                  pgtype.UUID
+	OrderUniqueID       string
+	UserID              pgtype.UUID
+	CouponCode          pgtype.Text
+	ShippingName        string
+	ShippingPhone       string
+	ShippingDistrict    string
+	ShippingThana       string
+	ShippingFullAddress string
+	SpecialNotes        pgtype.Text
+	Subtotal            pgtype.Numeric
+	DiscountAmount      pgtype.Numeric
+	ShippingAmount      pgtype.Numeric
+	TotalAmount         pgtype.Numeric
+	PaymentMethod       PaymentMethodEnum
+	PaymentStatus       PaymentStatusEnum
+	ShippingStatus      ShippingStatusEnum
+	IsPaymentVerified   bool
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
+}
+
+type OrderItem struct {
+	ID         pgtype.UUID
+	OrderID    pgtype.UUID
+	ProductID  pgtype.UUID
+	Quantity   int32
+	UnitPrice  pgtype.Numeric
+	TotalPrice pgtype.Numeric
+}
+
+type OrderStatusHistory struct {
+	ID                     pgtype.UUID
+	OrderID                pgtype.UUID
+	ChangedBy              pgtype.UUID
+	PreviousShippingStatus NullShippingStatusEnum
+	NewShippingStatus      ShippingStatusEnum
+	Remarks                pgtype.Text
+	CreatedAt              pgtype.Timestamptz
 }
 
 type Payment struct {
-	ID        int64
-	OrderID   int64
-	Amount    pgtype.Numeric
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID                 pgtype.UUID
+	OrderID            pgtype.UUID
+	TransactionID      pgtype.Text
+	Amount             pgtype.Numeric
+	PaymentMethod      PaymentMethodEnum
+	Status             PaymentStatusEnum
+	RawGatewayResponse []byte
+	PaidAt             pgtype.Timestamptz
+	CreatedAt          pgtype.Timestamptz
+	UpdatedAt          pgtype.Timestamptz
 }
 
 type Product struct {
-	ID            int64
-	Name          string
-	Description   pgtype.Text
-	ImageUrl      pgtype.Text
-	Slug          string
-	Price         pgtype.Numeric
-	IsStock       bool
-	StockQuantity int32
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+	ID                pgtype.UUID
+	CategoryID        pgtype.UUID
+	Name              string
+	Slug              string
+	Sku               string
+	Description       string
+	ShortDescription  string
+	Price             pgtype.Numeric
+	DiscountPrice     pgtype.Numeric
+	Quantity          int32
+	LowStockThreshold int32
+	StockStatus       StockStatusEnum
+	Label             ProductLabelEnum
+	Tags              []string
+	ImagesUrl         []string
+	IsActive          bool
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+	DeletedAt         pgtype.Timestamptz
+}
+
+type Review struct {
+	ID          pgtype.UUID
+	ProductID   pgtype.UUID
+	UserID      pgtype.UUID
+	Rating      int32
+	Description string
+	Status      ReviewStatusEnum
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
 }
 
 type User struct {
-	ID        int64
-	Name      string
-	Email     string
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID           pgtype.UUID
+	FullName     string
+	Email        string
+	PasswordHash string
+	PhoneNumber  pgtype.Text
+	Role         RoleEnum
+	IsActive     bool
+	CreatedAt    pgtype.Timestamptz
+	UpdatedAt    pgtype.Timestamptz
+	DeletedAt    pgtype.Timestamptz
 }
 
 type UserProfile struct {
-	ID        int64
-	UserID    int64
-	Bio       pgtype.Text
-	Address   pgtype.Text
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	ID            pgtype.UUID
+	UserID        pgtype.UUID
+	DateOfBirth   pgtype.Date
+	Gender        NullGenderEnum
+	Bio           pgtype.Text
+	Division      pgtype.Text
+	District      pgtype.Text
+	StreetAddress pgtype.Text
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
 }

@@ -8,12 +8,11 @@ import (
 )
 
 // UserRepository interface defines all data layer operations for a User.
-// এই ইন্টারফেসটি কখনো চেঞ্জ হবে না, সার্ভিস বা হ্যান্ডলার শুধু এই মেথডগুলোকে কল করবে।
 type UserRepository interface {
 	CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error)
 	GetUserByID(ctx context.Context, id int64) (db.User, error)
-	ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error)
-	UpdateUser(ctx context.Context, arg db.UpdateUserParams) (db.User, error)
+	ListUsers(ctx context.Context, arg db.ListCustomersParams) ([]db.User, error)
+	UpdateUser(ctx context.Context, arg db.up) (db.User, error)
 	DeleteUser(ctx context.Context, id int64) error
 }
 
@@ -25,12 +24,11 @@ type userSQLCRepository struct {
 // NewUserRepository is a constructor that returns the UserRepository interface.
 func NewUserRepository(dbPool *pgxpool.Pool) UserRepository {
 	return &userSQLCRepository{
-		q: db.New(db.DBTX(dbPool)),
+		q: db.New(db.DBTX(dbPool))
 	}
 }
 
 // ---- Implementations ----
-
 func (r *userSQLCRepository) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
 	return r.q.CreateUser(ctx, arg)
 }

@@ -1,0 +1,33 @@
+[build]
+  args_bin = []
+  bin = "./tmp/main"
+  # যদি আপনার main.go ফাইলটি একদম রুট ডিরেক্টরিতে থাকে, তবে এই cmd ঠিক আছে
+  cmd = "go build -o ./tmp/main ."
+  delay = 1000
+  entrypoint = ["./tmp/main"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata"]
+  exclude_file = []
+  exclude_regex = ["_test.go"]
+  exclude_unchanged = false
+  follow_symlink = false
+  full_bin = ""
+  ignore_dangerous_root_dir = false
+  
+  # 🔥 ফিক্স ১: এখানে আপনার প্রজেক্টের ফোল্ডারগুলোর নাম বলে দিতে হবে
+  # আপনি চাইলে সরাসরি ["."] দিতে পারেন অথবা নির্দিষ্ট ফোল্ডার নাম দিতে পারেন
+  include_dir = ["internal", "repository", "service", "handler", "db", "pkg"]
+  
+  # 🔥 ফিক্স ২: sql এবং yaml ফাইল চেঞ্জ ট্র্যাকিং এর জন্য এক্সটেনশন যোগ করা হলো
+  include_ext = ["go", "tpl", "tmpl", "html", "sql", "yaml", "toml"]
+  
+  include_file = ["."]
+  kill_delay = "0s"
+  log = "build-errors.log"
+  poll = true
+  poll_interval = 100
+  post_cmd = []
+  pre_cmd = []
+  rerun = false
+  rerun_delay = 500
+  send_interrupt = false
+  stop_on_error = false

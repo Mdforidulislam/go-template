@@ -11,84 +11,75 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createUserProfile = `-- name: CreateUserProfile :one
-INSERT INTO user_profiles (user_id, bio, address)
-VALUES ($1, $2, $3)
-RETURNING id, user_id, bio, address, created_at, updated_at
-`
-
-type CreateUserProfileParams struct {
-	UserID  int64
-	Bio     pgtype.Text
-	Address pgtype.Text
-}
-
-func (q *Queries) CreateUserProfile(ctx context.Context, arg CreateUserProfileParams) (UserProfile, error) {
-	row := q.db.QueryRow(ctx, createUserProfile, arg.UserID, arg.Bio, arg.Address)
-	var i UserProfile
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Bio,
-		&i.Address,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const deleteUserProfile = `-- name: DeleteUserProfile :exec
-DELETE FROM user_profiles
-WHERE user_id = $1
-`
-
-func (q *Queries) DeleteUserProfile(ctx context.Context, userID int64) error {
-	_, err := q.db.Exec(ctx, deleteUserProfile, userID)
-	return err
-}
-
-const getUserProfileByUserID = `-- name: GetUserProfileByUserID :one
-SELECT id, user_id, bio, address, created_at, updated_at FROM user_profiles
-WHERE user_id = $1 LIMIT 1
-`
-
-func (q *Queries) GetUserProfileByUserID(ctx context.Context, userID int64) (UserProfile, error) {
-	row := q.db.QueryRow(ctx, getUserProfileByUserID, userID)
-	var i UserProfile
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Bio,
-		&i.Address,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const updateUserProfile = `-- name: UpdateUserProfile :one
-UPDATE user_profiles
-SET bio = $2,
-    address = $3,
+const createOrUpdateProfile = `-- name: CreateOrUpdateProfile :one
+INSERT INTO user_profiles (
+    user_id, date_of_birth, gender, bio, division, district, street_address
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+ON CONFLICT (user_id) DO UPDATE SET
+    date_of_birth = EXCLUDED.date_of_birth,
+    gender = EXCLUDED.gender,
+    bio = EXCLUDED.bio,
+    division = EXCLUDED.division,
+    district = EXCLUDED.district,
+    street_address = EXCLUDED.street_address,
     updated_at = CURRENT_TIMESTAMP
-WHERE user_id = $1
-RETURNING id, user_id, bio, address, created_at, updated_at
+RETURNING id, user_id, date_of_birth, gender, bio, division, district, street_address, created_at, updated_at
 `
 
-type UpdateUserProfileParams struct {
-	UserID  int64
-	Bio     pgtype.Text
-	Address pgtype.Text
+type CreateOrUpdateProfileParams struct {
+	UserID        pgtype.UUID
+	DateOfBirth   pgtype.Date
+	Gender        NullGenderEnum
+	Bio           pgtype.Text
+	Division      pgtype.Text
+	District      pgtype.Text
+	StreetAddress pgtype.Text
 }
 
-func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (UserProfile, error) {
-	row := q.db.QueryRow(ctx, updateUserProfile, arg.UserID, arg.Bio, arg.Address)
+func (q *Queries) CreateOrUpdateProfile(ctx context.Context, arg CreateOrUpdateProfileParams) (UserProfile, error) {
+	row := q.db.QueryRow(ctx, createOrUpdateProfile,
+		arg.UserID,
+		arg.DateOfBirth,
+		arg.Gender,
+		arg.Bio,
+		arg.Division,
+		arg.District,
+		arg.StreetAddress,
+	)
 	var i UserProfile
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
+		&i.DateOfBirth,
+		&i.Gender,
 		&i.Bio,
-		&i.Address,
+		&i.Division,
+		&i.District,
+		&i.StreetAddress,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getProfileByUserId = `-- name: GetProfileByUserId :one
+SELECT id, user_id, date_of_birth, gender, bio, division, district, street_address, created_at, updated_at FROM user_profiles WHERE user_id = $1 LIMIT 1
+`
+
+func (q *Queries) GetProfileByUserId(ctx context.Context, userID pgtype.UUID) (UserProfile, error) {
+	row := q.db.QueryRow(ctx, getProfileByUserId, userID)
+	var i UserProfile
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.DateOfBirth,
+		&i.Gender,
+		&i.Bio,
+		&i.Division,
+		&i.District,
+		&i.StreetAddress,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -53,7 +53,7 @@ run:
 	@echo "🏃 Starting local server..."
 	go run cmd/api/main.go
 
-# 'air' দিয়ে হট-রিলোড বা লাইভ রিলোড রান করার জন্য (কোড চেঞ্জ করলে অটো রিস্টার্ট হবে)
+# 'air' দিয়ে হট-রিলোড বা লাইভ রিলোড রান করার জন্য
 dev: generate compile-migrations
 	@echo "🔥 Starting Air live reloader..."
 	air
