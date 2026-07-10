@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"example.com/m/v2/internal/handler"
+	"example.com/m/v2/internal/middleware"
 	"example.com/m/v2/internal/repository"
 	"example.com/m/v2/internal/service"
 	"github.com/gin-gonic/gin"
@@ -55,11 +56,24 @@ func main() {
 	{
 		api.POST("/users/register", userHandler.Register)
 		api.POST("/users/login", userHandler.Login)
-		
-		// প্রোফাইল রাউটস (বাস্তবে এখানে একটি AuthMiddleware থাকা উচিত)
-		// api.POST("/users/profile", userHandler.CompleteProfile) 
 	}
 
+	user := r.Group("/api/v1")
+	user.Use(middleware.AuthMiddleware())
+	{
+		user.GET("/users/get-me", userHandler.GetUserByEmail)
+	}
+
+	// =====================================================
+	// admin or private data here 
+	// =====================================================
+	adminAccess := r.Group("/api/v1/admin")
+	adminAccess.Use(middleware.AuthMiddleware())
+	adminAccess.Use(middleware.RequireRole("admin"))
+	{
+		adminAccess.GET("/user-list",userHandler.GetUserList)
+	}
+	
 	port := ":8080"
 	log.Printf("Server nicely started and listening on port %s...", port)
 	if err := r.Run(port); err != nil {
