@@ -3,48 +3,71 @@ package repository
 import (
 	"context"
 
-	db "example.com/m/v2/db/sqlc"
+	db "example.com/m/v2/db/sqlc" 
+
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// UserRepository interface defines all data layer operations for a User.
+// UserRepository interface
 type UserRepository interface {
-	CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error)
-	GetUserByID(ctx context.Context, id int64) (db.User, error)
-	ListUsers(ctx context.Context, arg db.ListCustomersParams) ([]db.User, error)
-	UpdateUser(ctx context.Context, arg db.up) (db.User, error)
-	DeleteUser(ctx context.Context, id int64) error
+	// --- Users Queries ---
+	CreateUser(ctx context.Context, arg db.CreateUserParams) (db.CreateUserRow, error)
+	GetUserByEmail(ctx context.Context, email string) (db.GetUserByEmailRow, error)
+	ListCustomers(ctx context.Context, arg db.ListCustomersParams) ([]db.ListCustomersRow, error)
+	UpdateUserOne(ctx context.Context, id pgtype.UUID) error
+	UpdateUserPassword(ctx context.Context, arg db.UpdateUserPasswordParams) error
+	UpdateUserStatus(ctx context.Context, arg db.UpdateUserStatusParams) error
+
+	// --- User Profile Queries ---
+	CreateOrUpdateProfile(ctx context.Context, arg db.CreateOrUpdateProfileParams) (db.UserProfile, error)
+	GetProfileByUserId(ctx context.Context, userID pgtype.UUID) (db.UserProfile, error)
 }
 
-// userSQLCRepository struct implements the UserRepository interface.
+// userSQLCRepository
 type userSQLCRepository struct {
 	q *db.Queries
 }
 
-// NewUserRepository is a constructor that returns the UserRepository interface.
+// NewUserRepository 
 func NewUserRepository(dbPool *pgxpool.Pool) UserRepository {
 	return &userSQLCRepository{
-		q: db.New(db.DBTX(dbPool))
+		q: db.New(dbPool), 
 	}
 }
 
-// ---- Implementations ----
-func (r *userSQLCRepository) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
+// ==========================================
+// ---- IMPLEMENTATIONS  ----
+// ==========================================
+
+func (r *userSQLCRepository) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.CreateUserRow, error) {
 	return r.q.CreateUser(ctx, arg)
 }
 
-func (r *userSQLCRepository) GetUserByID(ctx context.Context, id int64) (db.User, error) {
-	return r.q.GetUserByID(ctx, id)
+func (r *userSQLCRepository) GetUserByEmail(ctx context.Context, email string) (db.GetUserByEmailRow, error) {
+	return r.q.GetUserByEmail(ctx, email)
 }
 
-func (r *userSQLCRepository) ListUsers(ctx context.Context, arg db.ListUsersParams) ([]db.User, error) {
-	return r.q.ListUsers(ctx, arg)
+func (r *userSQLCRepository) ListCustomers(ctx context.Context, arg db.ListCustomersParams) ([]db.ListCustomersRow, error) {
+	return r.q.ListCustomers(ctx, arg)
 }
 
-func (r *userSQLCRepository) UpdateUser(ctx context.Context, arg db.UpdateUserParams) (db.User, error) {
-	return r.q.UpdateUser(ctx, arg)
+func (r *userSQLCRepository) UpdateUserOne(ctx context.Context, id pgtype.UUID) error {
+	return r.q.UpdateUserOne(ctx, id)
 }
 
-func (r *userSQLCRepository) DeleteUser(ctx context.Context, id int64) error {
-	return r.q.DeleteUser(ctx, id)
+func (r *userSQLCRepository) UpdateUserPassword(ctx context.Context, arg db.UpdateUserPasswordParams) error {
+	return r.q.UpdateUserPassword(ctx, arg)
+}
+
+func (r *userSQLCRepository) UpdateUserStatus(ctx context.Context, arg db.UpdateUserStatusParams) error {
+	return r.q.UpdateUserStatus(ctx, arg)
+}
+
+func (r *userSQLCRepository) CreateOrUpdateProfile(ctx context.Context, arg db.CreateOrUpdateProfileParams) (db.UserProfile, error) {
+	return r.q.CreateOrUpdateProfile(ctx, arg)
+}
+
+func (r *userSQLCRepository) GetProfileByUserId(ctx context.Context, userID pgtype.UUID) (db.UserProfile, error) {
+	return r.q.GetProfileByUserId(ctx, userID)
 }

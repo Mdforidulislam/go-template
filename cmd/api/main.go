@@ -3,53 +3,66 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
+	"time"
 
 	"example.com/m/v2/internal/handler"
 	"example.com/m/v2/internal/repository"
 	"example.com/m/v2/internal/service"
-
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func main() {
+func main() {	
 	ctx := context.Background()
-
-	// ১. ডাটাবেজ কানেকশন পুল (dbPool) তৈরি
-	dbPool, err := pgxpool.New(ctx, "postgres://postgres@localhost:5432/my_test_db?sslmode=disable")
+	dbURI := "postgres://postgres@localhost:5432/my_test_db?sslmode=disable"
+	config, err := pgxpool.ParseConfig(dbURI)
 	if err != nil {
-		log.Fatalf("Unable to connect to database: %v", err)
+		log.Fatalf("Error with coneection database auth: %v", err)
 	}
-	defer dbPool.Close()
 
-	// ২. dbPool পাস করে রেপোজিটরি তৈরি করলাম
+	config.MaxConns = 10                      
+	config.MinConns = 2                        
+	config.MaxConnIdleTime = 5 * time.Minute   
+
+	dbPool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		log.Fatalf("Fail to connection database: %v", err)
+	}
+	defer dbPool.Close() 
+
+	if err := dbPool.Ping(ctx); err != nil {
+		log.Fatalf("Don't response to database (Ping Failed): %v", err)
+	}
+	log.Println("Database connection successfully established!")
+
+	// ========================================================
+	// (Dependency Injection Chain)
+	// ========================================================
+	
 	userRepo := repository.NewUserRepository(dbPool)
-
-	// ৩. রেপোজিটরি পাস করে সার্ভিস তৈরি করলাম
 	userService := service.NewUserService(userRepo)
-
-	// ৪. এই যে কানেকশন! সার্ভিস পাস করে হ্যান্ডলার তৈরি করলাম
 	userHandler := handler.NewUserHandler(userService)
 
-	// ৫. জিনের একটি ডিফল্ট রাউটার ইঞ্জিন তৈরি করুন
 	r := gin.Default()
+	r.Use(gin.Recovery())
 
-	// ৬. রাউটারের সাথে হ্যান্ডলারের ফাংশনটি কানেক্ট বা ম্যাপ করুন
-	// ক্লায়েন্ট যখন POST রিকোয়েস্ট পাঠাবে "/users" এ, তখন userHandler-এর CreateUser রান হবে
-	r.POST("/users", userHandler.CreateUser)
-	// ---- টেস্টিং এর জন্য GET মেথড (সরাসরি মেইন ফাইল থেকে ডাটা রিটার্ন) ----
-	r.GET("/users", func(c *gin.Context) {
-		// এখানে আমরা একটি নকল বা ডামি ইউজার ডেটা ম্যাপ করে রিটার্ন করছি
-		c.JSON(200, gin.H{
-			"id":      1,
-			"name":    "Md Foridul Islam",
-			"email":   "foridul@example.com",
-			"role":    "Backend Developer",
-			"message": "Hello! Main function থেকে সরাসরি ডাটা সাকসেসফুলি আসছে।",
-		})
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "UP", "message": "Server is healthy"})
 	})
 
-	// ৭. সার্ভারটি চালু করুন (ডিফল্টভাবে পোর্ট ৮০৮০ তে রান হবে)
-	log.Println("Server is running on port 8080...")
-	r.Run(":8080")
+	api := r.Group("/api/v1")
+	{
+		api.POST("/users/register", userHandler.Register)
+		api.POST("/users/login", userHandler.Login)
+		
+		// প্রোফাইল রাউটস (বাস্তবে এখানে একটি AuthMiddleware থাকা উচিত)
+		// api.POST("/users/profile", userHandler.CompleteProfile) 
+	}
+
+	port := ":8080"
+	log.Printf("Server nicely started and listening on port %s...", port)
+	if err := r.Run(port); err != nil {
+		log.Fatalf("Fail to run server : %v", err)
+	}
 }

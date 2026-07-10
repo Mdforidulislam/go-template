@@ -58,7 +58,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT id, full_name, email, password_hash, role, is_active 
-FROM users 
+FROM users
 WHERE email = $1 AND deleted_at IS NULL LIMIT 1
 `
 
@@ -74,35 +74,6 @@ type GetUserByEmailRow struct {
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (GetUserByEmailRow, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i GetUserByEmailRow
-	err := row.Scan(
-		&i.ID,
-		&i.FullName,
-		&i.Email,
-		&i.PasswordHash,
-		&i.Role,
-		&i.IsActive,
-	)
-	return i, err
-}
-
-const getUserForUpdate = `-- name: GetUserForUpdate :one
-SELECT id, full_name, email, password_hash, role, is_active 
-FROM users 
-WHERE id = $1 AND deleted_at IS NULL LIMIT 1
-`
-
-type GetUserForUpdateRow struct {
-	ID           pgtype.UUID
-	FullName     string
-	Email        string
-	PasswordHash string
-	Role         RoleEnum
-	IsActive     bool
-}
-
-func (q *Queries) GetUserForUpdate(ctx context.Context, id pgtype.UUID) (GetUserForUpdateRow, error) {
-	row := q.db.QueryRow(ctx, getUserForUpdate, id)
-	var i GetUserForUpdateRow
 	err := row.Scan(
 		&i.ID,
 		&i.FullName,
@@ -161,6 +132,17 @@ func (q *Queries) ListCustomers(ctx context.Context, arg ListCustomersParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateUserOne = `-- name: UpdateUserOne :exec
+SELECT id, full_name, email, password_hash, role, is_active 
+FROM users 
+WHERE id = $1 AND deleted_at IS NULL LIMIT 1
+`
+
+func (q *Queries) UpdateUserOne(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, updateUserOne, id)
+	return err
 }
 
 const updateUserPassword = `-- name: UpdateUserPassword :exec
